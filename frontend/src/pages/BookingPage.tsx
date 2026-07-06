@@ -88,7 +88,7 @@ export default function BookingPage() {
         return;
       }
       setShowQRModal(false);
-      navigate("/booking-success", {
+      navigate("/riwayat", {
         state: {
           booking: data.booking,
           movieTitle: movie?.title,
@@ -308,7 +308,7 @@ export default function BookingPage() {
               <img
                 src={"/qris.jpeg"}
                 alt="QR Payment"
-                style={{ width: "200px", height: "200px" }}
+                style={{ width: "310px", height: "310px" }}
               />
             </div>
             <h2 style={{ color: "#82ebd5", margin: "0 0 20px 0" }}>

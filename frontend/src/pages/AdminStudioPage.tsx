@@ -10,6 +10,7 @@ import {
   X,
   Loader2,
   Armchair,
+  BarChart3,
 } from "lucide-react";
 import logoImage from "../assets/logo.png";
 
@@ -72,7 +73,7 @@ export default function AdminStudioPage() {
     studioId: "",
     showDate: "",
     showTime: "",
-    price: 0,
+    price: "",
   });
 
   const [showEditScheduleModal, setShowEditScheduleModal] = useState(false);
@@ -82,7 +83,7 @@ export default function AdminStudioPage() {
     studioId: "",
     showDate: "",
     showTime: "",
-    price: 0,
+    price: "",
   });
 
   const getToken = () => localStorage.getItem("token");
@@ -113,7 +114,7 @@ export default function AdminStudioPage() {
           studioId: "",
           showDate: "",
           showTime: "",
-          price: 0,
+          price: "",
         });
         setShowScheduleForm(false);
         fetchMoviesAndSchedules(); // Refresh tabel
@@ -316,6 +317,9 @@ export default function AdminStudioPage() {
           </button>
           <button className="active" onClick={() => navigate("/admin/studios")}>
             <LayoutGrid size={20} /> Kelola Studio & Jadwal
+          </button>
+          <button onClick={() => navigate('/admin/report')}>
+            <BarChart3 size={20} /> Laporan Penjualan
           </button>
         </nav>
       </aside>
@@ -730,7 +734,7 @@ export default function AdminStudioPage() {
                   onChange={(e) =>
                     setScheduleFormData({
                       ...scheduleFormData,
-                      price: Number(e.target.value),
+                      price: (e.target.value),
                     })
                   }
                   min="0"
@@ -919,7 +923,7 @@ export default function AdminStudioPage() {
                   onChange={(e) =>
                     setEditingSchedule({
                       ...editingSchedule,
-                      price: Number(e.target.value),
+                      price: (e.target.value),
                     })
                   }
                   min="0"

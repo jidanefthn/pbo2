@@ -55,13 +55,13 @@ export default function MovieDetailPage() {
         const allSchedules = scheduleData.schedules || scheduleData.data || [];
 
         if (Array.isArray(allSchedules)) {
-          // 🌟 PERBAIKAN 1: Filter jadwal mencocokkan ID angka (movieId) sesuai backend, bukan teks judul
+          // Filter jadwal mencocokkan ID angka (movieId) sesuai backend, bukan teks judul
           const movieSchedules = allSchedules.filter(
             (s: any) => Number(s.movieId) === Number(id)
           );
           setSchedules(movieSchedules);
 
-          // 🌟 PERBAIKAN 2: Menggunakan field 'showDate' sesuai spesifikasi Swagger backend
+          // Menggunakan field 'showDate' sesuai spesifikasi Swagger backend
           const uniqueDates = Array.from(
             new Set(movieSchedules.map((s: any) => s.showDate || s.date))
           )
@@ -321,8 +321,8 @@ export default function MovieDetailPage() {
                           gap: "12px",
                           flexWrap: "wrap",
                         }}
-                      >
-                        {schedulesByStudio[studio].map((item) => {
+                      > {/* 🌟 Diperbaiki: Ditambahkan penutup ">" di baris ini */}         
+                        {schedulesByStudio[studio].map((item : any) => {
                           // Memotong format detik bawaan MySQL jika ada (contoh 19:00:00 -> 19:00)
                           const cleanTime = item.time.substring(0, 5);
                           const isSelected =

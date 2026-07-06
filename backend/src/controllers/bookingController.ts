@@ -1,14 +1,10 @@
 import { Response } from "express";
-
 import { eq, inArray } from "drizzle-orm";
-
 import { db } from "../db";
-
 import { bookings } from "../db/schema/bookings";
 import { bookingSeats } from "../db/schema/bookingSeats";
 import { seats } from "../db/schema/seats";
 import { schedules } from "../db/schema/schedules";
-
 import { AuthRequest } from "../middlewares/authMiddleware";
 
 export const createBooking = async (
@@ -17,7 +13,6 @@ export const createBooking = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-
     const { scheduleId, seatIds } = req.body;
 
     if (!userId) {
@@ -25,7 +20,6 @@ export const createBooking = async (
         success: false,
         message: "Unauthorized",
       });
-
       return;
     }
 
@@ -34,7 +28,6 @@ export const createBooking = async (
         success: false,
         message: "Schedule ID and seat IDs are required",
       });
-
       return;
     }
 
@@ -43,7 +36,6 @@ export const createBooking = async (
         success: false,
         message: "Please select at least one seat",
       });
-
       return;
     }
 
@@ -57,7 +49,6 @@ export const createBooking = async (
         success: false,
         message: "Schedule not found",
       });
-
       return;
     }
 
@@ -71,7 +62,6 @@ export const createBooking = async (
         success: false,
         message: "Some seats were not found",
       });
-
       return;
     }
 
@@ -82,7 +72,6 @@ export const createBooking = async (
         success: false,
         message: `Seat ${bookedSeat.seatNumber} is already booked`,
       });
-
       return;
     }
 
@@ -117,7 +106,6 @@ export const createBooking = async (
     res.status(201).json({
       success: true,
       message: "Booking created successfully",
-
       booking: {
         id: newBooking[0].id,
         userId: newBooking[0].userId,
@@ -131,7 +119,6 @@ export const createBooking = async (
     res.status(500).json({
       success: false,
       message: "Failed to create booking",
-
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }
@@ -149,7 +136,6 @@ export const getBookingHistory = async (
         success: false,
         message: "Unauthorized",
       });
-
       return;
     }
 
@@ -161,14 +147,46 @@ export const getBookingHistory = async (
     res.status(200).json({
       success: true,
       total: userBookings.length,
-
       bookings: userBookings,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Failed to fetch booking history",
+      error: error instanceof Error ? error.message : "Internal server error",
+    });
+  }
+};
 
+export const getAllBookings = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    // Mengambil seluruh baris data dari tabel bookings tanpa filter userId
+    const allBookings = await db
+      .select()
+      .from(bookings);
+
+    res.status(200).json({
+      success: true,
+      total: allBookings.length,
+      bookings: allBookings,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch all bookings",
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }

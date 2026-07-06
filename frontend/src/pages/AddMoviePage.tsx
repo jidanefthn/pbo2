@@ -11,7 +11,6 @@ export default function AddMoviePage() {
     duration: '',
     posterUrl: '',
     description: '',
-    price: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,8 +28,7 @@ export default function AddMoviePage() {
         body: JSON.stringify({
           ...movie,
           // Pastikan durasi dan harga dikonversi menjadi angka (Number)
-          duration: Number(movie.duration),
-          price: Number(movie.price)
+          duration: Number(movie.duration)
         })
       });
 
@@ -77,16 +75,6 @@ export default function AddMoviePage() {
               value={movie.duration} 
               onChange={e => setMovie({...movie, duration: e.target.value})} 
               placeholder="Contoh: 120"
-              required 
-            />
-          </div>
-          <div>
-            <label>Harga (Rp)</label>
-            <input 
-              type="number" 
-              value={movie.price} 
-              onChange={e => setMovie({...movie, price: e.target.value})} 
-              placeholder="Contoh: 50000"
               required 
             />
           </div>

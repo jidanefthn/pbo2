@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, LayoutGrid, Plus, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { Film, LayoutGrid, Plus, Trash2, Edit2, Loader2, BarChart3 } from 'lucide-react';
 import logoImage from '../assets/logo.png'; 
 
 export default function AdminMoviePage() {
@@ -72,6 +72,9 @@ export default function AdminMoviePage() {
           <button onClick={() => navigate('/admin/studios')}>
             <LayoutGrid size={20} /> Kelola Studio & Jadwal
           </button>
+           <button onClick={() => navigate('/admin/report')}>
+            <BarChart3 size={20} /> Laporan Penjualan
+          </button>
         </nav>
       </aside>
 
@@ -96,7 +99,6 @@ export default function AdminMoviePage() {
                   <th>Judul Film</th>
                   <th>Genre</th>
                   <th>Durasi (Menit)</th>
-                  <th>Harga (Rp)</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -106,7 +108,6 @@ export default function AdminMoviePage() {
                     <td>{m.title}</td>
                     <td>{m.genre}</td>
                     <td>{m.duration}</td>
-                    <td>{Number(m.price || 0).toLocaleString('id-ID')}</td>
                     <td className="actions">
                       <button 
                         className="btn-edit" 

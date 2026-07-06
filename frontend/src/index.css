@@ -731,7 +731,7 @@ body {
 ========================================= */
 .promo-carousel-section {
   background-color: transparent; /* Menghapus warna gelap, mengikuti warna beranda */
-  padding: 20px 20px 10px 20px; /* Padding atas-bawah dikurangi agar lebih rapat */
+  padding: 0 40px 40px 40px; /* Disesuaikan dengan padding beranda Anda */
   display: flex;
   justify-content: center;
 }
@@ -747,7 +747,8 @@ body {
 .carousel-track {
   display: flex;
   gap: 15px; 
-  overflow-x: auto;
+  overflow-x: hidden; /* Mengunci scrollbar manual agar fungsi tombol panah bekerja maksimal */
+  scroll-behavior: smooth;
   padding: 10px 0;
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -757,17 +758,25 @@ body {
   display: none;
 }
 
-.carousel-slide {
-  flex: 0 0 280px; 
-  border-radius: 10px;
+/* 🌟 Diubah agar lebar dasar slide menjadi persegi panjang kecil ke samping */
+.carousel-slide, .carousel-item {
+  flex: 0 0 250px; /* Lebar dikecilkan dari 280px ke 250px agar mungil */
+  border-radius: 12px; /* Sudut lengkungan dibuat sedikit lebih halus */
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06); 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Shadow disesuaikan dengan tema gelap */
+  transition: transform 0.2s ease;
 }
 
-.carousel-slide img {
+/* 🌟 Efek hover opsional agar slider terasa lebih interaktif */
+.carousel-slide:hover, .carousel-item:hover {
+  transform: translateY(-2px);
+}
+
+/* 🌟 Tinggi gambar diturunkan menjadi 120px agar proporsinya pas */
+.carousel-slide img, .carousel-item img {
   width: 100%;
-  height: 140px; /* Tinggi banner dibuat seragam dan mungil */
-  object-fit: cover; /* Memastikan gambar tidak gepeng */
+  height: 120px; /* Diturunkan dari 140px ke 120px agar tampak pipih/landscape */
+  object-fit: cover; /* Menjaga aset gambar promo tidak gepeng atau distorsi */
   display: block;
 }
 
