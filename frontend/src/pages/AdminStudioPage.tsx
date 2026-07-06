@@ -15,6 +15,7 @@ import {
 import logoImage from "../assets/logo.png";
 
 const API_BASE = "http://localhost:3000/api";
+const DEFAULT_TOTAL_SEATS = 120;
 
 export default function AdminStudioPage() {
   const navigate = useNavigate();
@@ -84,7 +85,6 @@ export default function AdminStudioPage() {
   const [showStudioForm, setShowStudioForm] = useState(false);
   const [studioFormData, setStudioFormData] = useState({
     name: "",
-    totalSeats: "",
     isActive: true,
   });
 
@@ -92,7 +92,6 @@ export default function AdminStudioPage() {
   const [editingStudio, setEditingStudio] = useState({
     id: 0,
     name: "",
-    totalSeats: "",
     isActive: true,
   });
 
@@ -119,8 +118,8 @@ export default function AdminStudioPage() {
   // --- 🌟 INTEGRASI API: TAMBAH STUDIO ---
   const handleStudioSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studioFormData.name || !studioFormData.totalSeats) {
-      alert("Nama studio dan total kursi wajib diisi.");
+    if (!studioFormData.name) {
+      alert("Nama studio wajib diisi.");
       return;
     }
     try {
@@ -132,14 +131,14 @@ export default function AdminStudioPage() {
         },
         body: JSON.stringify({
           name: studioFormData.name,
-          totalSeats: Number(studioFormData.totalSeats),
+          totalSeats: DEFAULT_TOTAL_SEATS,
           isActive: studioFormData.isActive,
         }),
       });
 
       if (response.ok || response.status === 201) {
         alert("Studio berhasil ditambahkan!");
-        setStudioFormData({ name: "", totalSeats: "", isActive: true });
+        setStudioFormData({ name: "", isActive: true });
         setShowStudioForm(false);
         fetchStudios();
       } else {
@@ -157,7 +156,6 @@ export default function AdminStudioPage() {
     setEditingStudio({
       id: studio.id,
       name: studio.name,
-      totalSeats: studio.totalSeats,
       isActive: studio.isActive,
     });
     setShowEditStudioModal(true);
@@ -165,6 +163,7 @@ export default function AdminStudioPage() {
 
   const handleEditStudioSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const currentStudio = studios.find((s) => s.id === editingStudio.id);
     try {
       const response = await fetch(`${API_BASE}/studios/${editingStudio.id}`, {
         method: "PUT",
@@ -174,7 +173,7 @@ export default function AdminStudioPage() {
         },
         body: JSON.stringify({
           name: editingStudio.name,
-          totalSeats: Number(editingStudio.totalSeats),
+          totalSeats: currentStudio?.totalSeats ?? DEFAULT_TOTAL_SEATS,
           isActive: editingStudio.isActive,
         }),
       });
@@ -203,7 +202,7 @@ export default function AdminStudioPage() {
         },
         body: JSON.stringify({
           name: studio.name,
-          totalSeats: studio.totalSeats,
+          totalSeats: studio.totalSeats ?? DEFAULT_TOTAL_SEATS,
           isActive: !studio.isActive,
         }),
       });
@@ -530,7 +529,6 @@ export default function AdminStudioPage() {
                   <thead>
                     <tr>
                       <th>Nama Studio</th>
-                      <th>Total Kursi</th>
                       <th>Status Ketersediaan</th>
                       <th>Aksi</th>
                     </tr>
@@ -539,7 +537,6 @@ export default function AdminStudioPage() {
                     {studios.map((s) => (
                       <tr key={s.id}>
                         <td>{s.name}</td>
-                        <td>{s.totalSeats}</td>
                         <td>
                           <span
                             style={{
@@ -741,30 +738,6 @@ export default function AdminStudioPage() {
                     boxSizing: "border-box",
                   }}
                 />
-                <label>Total Kursi</label>
-                <input
-                  type="number"
-                  value={studioFormData.totalSeats}
-                  onChange={(e) =>
-                    setStudioFormData({
-                      ...studioFormData,
-                      totalSeats: e.target.value,
-                    })
-                  }
-                  min="1"
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    backgroundColor: "#1f2937",
-                    color: "white",
-                    border: "1px solid #374151",
-                    outline: "none",
-                    marginBottom: "15px",
-                    boxSizing: "border-box",
-                  }}
-                />
                 <label>Status Ketersediaan</label>
                 <select
                   value={studioFormData.isActive ? "true" : "false"}
@@ -846,30 +819,6 @@ export default function AdminStudioPage() {
                       name: e.target.value,
                     })
                   }
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    backgroundColor: "#1f2937",
-                    color: "white",
-                    border: "1px solid #374151",
-                    outline: "none",
-                    marginBottom: "15px",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <label>Total Kursi</label>
-                <input
-                  type="number"
-                  value={editingStudio.totalSeats}
-                  onChange={(e) =>
-                    setEditingStudio({
-                      ...editingStudio,
-                      totalSeats: e.target.value,
-                    })
-                  }
-                  min="1"
                   required
                   style={{
                     width: "100%",
