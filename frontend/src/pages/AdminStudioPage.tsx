@@ -14,59 +14,89 @@ import {
 } from "lucide-react";
 import logoImage from "../assets/logo.png";
 
+const API_BASE = "http://localhost:3000/api";
+
 export default function AdminStudioPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"studio" | "jadwal">("studio");
   const [isLoading, setIsLoading] = useState(false);
+  const [isStudioLoading, setIsStudioLoading] = useState(false);
   const [generatingSeatsId, setGeneratingSeatsId] = useState<number | null>(
     null
   );
 
   // --- STATE UNTUK DATA MASTER ---
   const [movies, setMovies] = useState<any[]>([]);
-  const [studios, setStudios] = useState<any[]>([
-    { id: 1, name: "Studio 1 Ultra XD", status: "Tersedia" },
-    { id: 2, name: "Studio 2 Gold VIP", status: "Tidak Tersedia" },
-    { id: 3, name: "Studio 3 Dolby Atmos", status: "Tersedia" },
-  ]);
+  const [studios, setStudios] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
+
+  const getToken = () => localStorage.getItem("token");
 
   // --- FETCH DATA SAAT HALAMAN DIMUAT ---
   useEffect(() => {
-    fetchMoviesAndSchedules();
+    fetchAllData();
   }, []);
 
-  const fetchMoviesAndSchedules = async () => {
-    setIsLoading(true);
+  const fetchAllData = async () => {
+    await Promise.all([fetchMovies(), fetchStudios(), fetchSchedules()]);
+  };
+
+  const fetchMovies = async () => {
     try {
-      // Ambil daftar film
-      const movieRes = await fetch("http://localhost:3000/api/movies");
+      const movieRes = await fetch(`${API_BASE}/movies`);
       const movieData = await movieRes.json();
       if (movieData.success) setMovies(movieData.movies);
+    } catch (error) {
+      console.error("Gagal mengambil data film:", error);
+    }
+  };
 
-      // Ambil daftar jadwal dari backend
-      const scheduleRes = await fetch("http://localhost:3000/api/schedules");
+  // --- 🌟 STUDIO SEKARANG BENERAN DARI BACKEND ---
+  const fetchStudios = async () => {
+    setIsStudioLoading(true);
+    try {
+      const studioRes = await fetch(`${API_BASE}/studios`);
+      const studioData = await studioRes.json();
+      if (studioData.success) setStudios(studioData.studios);
+    } catch (error) {
+      console.error("Gagal mengambil data studio:", error);
+    } finally {
+      setIsStudioLoading(false);
+    }
+  };
+
+  const fetchSchedules = async () => {
+    setIsLoading(true);
+    try {
+      const scheduleRes = await fetch(`${API_BASE}/schedules`);
       const scheduleData = await scheduleRes.json();
-
-      // Sesuaikan jika format response API Anda berbeda
       if (scheduleData.success || scheduleData.data) {
         setSchedules(scheduleData.schedules || scheduleData.data || []);
       }
     } catch (error) {
-      console.error("Gagal mengambil data dari API:", error);
+      console.error("Gagal mengambil data jadwal:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- STATE MODAL STUDIO (Tetap lokal sementara) ---
+  // --- STATE MODAL STUDIO ---
   const [showStudioForm, setShowStudioForm] = useState(false);
   const [studioFormData, setStudioFormData] = useState({
     name: "",
-    status: "Tersedia",
+    totalSeats: "",
+    isActive: true,
   });
 
-  // --- STATE MODAL JADWAL (Disesuaikan dengan Backend) ---
+  const [showEditStudioModal, setShowEditStudioModal] = useState(false);
+  const [editingStudio, setEditingStudio] = useState({
+    id: 0,
+    name: "",
+    totalSeats: "",
+    isActive: true,
+  });
+
+  // --- STATE MODAL JADWAL ---
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [scheduleFormData, setScheduleFormData] = useState({
     movieId: "",
@@ -86,13 +116,137 @@ export default function AdminStudioPage() {
     price: "",
   });
 
-  const getToken = () => localStorage.getItem("token");
+  // --- 🌟 INTEGRASI API: TAMBAH STUDIO ---
+  const handleStudioSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studioFormData.name || !studioFormData.totalSeats) {
+      alert("Nama studio dan total kursi wajib diisi.");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE}/studios`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({
+          name: studioFormData.name,
+          totalSeats: Number(studioFormData.totalSeats),
+          isActive: studioFormData.isActive,
+        }),
+      });
+
+      if (response.ok || response.status === 201) {
+        alert("Studio berhasil ditambahkan!");
+        setStudioFormData({ name: "", totalSeats: "", isActive: true });
+        setShowStudioForm(false);
+        fetchStudios();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Gagal menambah studio.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Terjadi kesalahan jaringan.");
+    }
+  };
+
+  // --- 🌟 INTEGRASI API: EDIT / TOGGLE STATUS STUDIO ---
+  const handleOpenEditStudio = (studio: any) => {
+    setEditingStudio({
+      id: studio.id,
+      name: studio.name,
+      totalSeats: studio.totalSeats,
+      isActive: studio.isActive,
+    });
+    setShowEditStudioModal(true);
+  };
+
+  const handleEditStudioSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_BASE}/studios/${editingStudio.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({
+          name: editingStudio.name,
+          totalSeats: Number(editingStudio.totalSeats),
+          isActive: editingStudio.isActive,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Studio berhasil diperbarui!");
+        setShowEditStudioModal(false);
+        fetchStudios();
+      } else {
+        alert("Gagal memperbarui studio.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Terjadi kesalahan jaringan.");
+    }
+  };
+
+  // Toggle cepat aktif/nonaktif langsung dari tabel (tanpa buka modal)
+  const handleToggleStatus = async (studio: any) => {
+    try {
+      const response = await fetch(`${API_BASE}/studios/${studio.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({
+          name: studio.name,
+          totalSeats: studio.totalSeats,
+          isActive: !studio.isActive,
+        }),
+      });
+
+      if (response.ok) {
+        fetchStudios();
+      } else {
+        alert("Gagal mengubah status studio.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Terjadi kesalahan jaringan.");
+    }
+  };
+
+  // --- 🌟 INTEGRASI API: HAPUS STUDIO ---
+  const handleDeleteStudio = async (id: number, name: string) => {
+    if (!window.confirm(`Hapus ${name}?`)) return;
+    try {
+      const response = await fetch(`${API_BASE}/studios/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchStudios();
+      } else {
+        const errorData = await response.json().catch(() => null);
+        alert(errorData?.message || "Gagal menghapus studio.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Terjadi kesalahan jaringan.");
+    }
+  };
 
   // --- 🌟 INTEGRASI API: TAMBAH JADWAL ---
   const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/api/schedules", {
+      const response = await fetch(`${API_BASE}/schedules`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,7 +271,7 @@ export default function AdminStudioPage() {
           price: "",
         });
         setShowScheduleForm(false);
-        fetchMoviesAndSchedules(); // Refresh tabel
+        fetchSchedules(); // Refresh tabel
       } else {
         const errorData = await response.json();
         alert(errorData.message || "Gagal menambah jadwal.");
@@ -145,7 +299,7 @@ export default function AdminStudioPage() {
     e.preventDefault();
     try {
       const response = await fetch(
-        `http://localhost:3000/api/schedules/${editingSchedule.id}`,
+        `${API_BASE}/schedules/${editingSchedule.id}`,
         {
           method: "PUT",
           headers: {
@@ -165,7 +319,7 @@ export default function AdminStudioPage() {
       if (response.ok) {
         alert("Jadwal berhasil diperbarui!");
         setShowEditScheduleModal(false);
-        fetchMoviesAndSchedules();
+        fetchSchedules();
       } else {
         alert("Gagal memperbarui jadwal.");
       }
@@ -181,18 +335,15 @@ export default function AdminStudioPage() {
       window.confirm("Apakah Anda yakin ingin menghapus jadwal tayang ini?")
     ) {
       try {
-        const response = await fetch(
-          `http://localhost:3000/api/schedules/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${getToken()}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE}/schedules/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        });
 
         if (response.ok) {
-          fetchMoviesAndSchedules(); // Refresh otomatis setelah dihapus
+          fetchSchedules(); // Refresh otomatis setelah dihapus
         } else {
           alert("Gagal menghapus jadwal.");
         }
@@ -209,44 +360,14 @@ export default function AdminStudioPage() {
   const getStudioName = (sId: number) =>
     studios.find((s) => s.id === sId)?.name || `ID Studio: ${sId}`;
 
-  // --- FUNGSI STUDIO (Lokal Sementara) ---
-  const handleStudioSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStudios([
-      ...studios,
-      {
-        id: Date.now(),
-        name: studioFormData.name,
-        status: studioFormData.status,
-      },
-    ]);
-    setStudioFormData({ name: "", status: "Tersedia" });
-    setShowStudioForm(false);
-  };
-
-  const handleToggleStatus = (id: number, currentStatus: string) => {
-    const nextStatus =
-      currentStatus === "Tersedia" ? "Tidak Tersedia" : "Tersedia";
-    setStudios(
-      studios.map((s) => (s.id === id ? { ...s, status: nextStatus } : s))
-    );
-  };
-  const handleDeleteStudio = (id: number, name: string) => {
-    if (window.confirm(`Hapus ${name}?`))
-      setStudios(studios.filter((s) => s.id !== id));
-  };
-
   const generateSeatsForSchedule = async (scheduleId: number) => {
     // Cek dulu, jangan sampe generate dobel kalo udah ada kursinya
     try {
-      const checkRes = await fetch(
-        `http://localhost:3000/api/seats/${scheduleId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-          },
-        }
-      );
+      const checkRes = await fetch(`${API_BASE}/seats/${scheduleId}`, {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      });
       const checkData = await checkRes.json();
       if (checkData.success && checkData.seats && checkData.seats.length > 0) {
         alert(
@@ -273,7 +394,7 @@ export default function AdminStudioPage() {
 
       const results = await Promise.all(
         seatNumbers.map((seatNumber) =>
-          fetch("http://localhost:3000/api/seats", {
+          fetch(`${API_BASE}/seats`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -318,7 +439,7 @@ export default function AdminStudioPage() {
           <button className="active" onClick={() => navigate("/admin/studios")}>
             <LayoutGrid size={20} /> Kelola Studio & Jadwal
           </button>
-          <button onClick={() => navigate('/admin/report')}>
+          <button onClick={() => navigate("/admin/report")}>
             <BarChart3 size={20} /> Laporan Penjualan
           </button>
         </nav>
@@ -394,60 +515,78 @@ export default function AdminStudioPage() {
               </button>
             </div>
             <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nama Studio</th>
-                    <th>Status Ketersediaan</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {studios.map((s) => (
-                    <tr key={s.id}>
-                      <td>{s.name}</td>
-                      <td>
-                        <span
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                            backgroundColor:
-                              s.status === "Tersedia" ? "#064e3b" : "#7f1d1d",
-                            color:
-                              s.status === "Tersedia" ? "#34d399" : "#f87171",
-                          }}
-                        >
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="actions">
-                        <button
-                          className="btn-edit"
-                          onClick={() => handleToggleStatus(s.id, s.status)}
-                          style={{
-                            backgroundColor: "#1e293b",
-                            color: "#38bdf8",
-                          }}
-                        >
-                          {s.status === "Tersedia" ? (
-                            <X size={16} />
-                          ) : (
-                            <Check size={16} />
-                          )}
-                        </button>
-                        <button
-                          className="btn-delete"
-                          onClick={() => handleDeleteStudio(s.id, s.name)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+              {isStudioLoading ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    padding: "50px",
+                  }}
+                >
+                  <Loader2 className="spinner" size={40} />
+                </div>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nama Studio</th>
+                      <th>Total Kursi</th>
+                      <th>Status Ketersediaan</th>
+                      <th>Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {studios.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.name}</td>
+                        <td>{s.totalSeats}</td>
+                        <td>
+                          <span
+                            style={{
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              backgroundColor: s.isActive
+                                ? "#064e3b"
+                                : "#7f1d1d",
+                              color: s.isActive ? "#34d399" : "#f87171",
+                            }}
+                          >
+                            {s.isActive ? "Tersedia" : "Tidak Tersedia"}
+                          </span>
+                        </td>
+                        <td className="actions">
+                          <button
+                            className="btn-edit"
+                            onClick={() => handleToggleStatus(s)}
+                            title={s.isActive ? "Nonaktifkan" : "Aktifkan"}
+                            style={{
+                              backgroundColor: "#1e293b",
+                              color: "#38bdf8",
+                            }}
+                          >
+                            {s.isActive ? <X size={16} /> : <Check size={16} />}
+                          </button>
+                          <button
+                            className="btn-edit"
+                            onClick={() => handleOpenEditStudio(s)}
+                            title="Edit studio"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            className="btn-delete"
+                            onClick={() => handleDeleteStudio(s.id, s.name)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         )}
@@ -549,7 +688,7 @@ export default function AdminStudioPage() {
           </div>
         )}
 
-        {/* MODAL STUDIO */}
+        {/* MODAL TAMBAH STUDIO */}
         {showStudioForm && (
           <div
             style={{
@@ -590,15 +729,49 @@ export default function AdminStudioPage() {
                     })
                   }
                   required
-                  style={{ marginBottom: "20px" }}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: "#1f2937",
+                    color: "white",
+                    border: "1px solid #374151",
+                    outline: "none",
+                    marginBottom: "15px",
+                    boxSizing: "border-box",
+                  }}
                 />
-                <label>Status Ketersediaan</label>
-                <select
-                  value={studioFormData.status}
+                <label>Total Kursi</label>
+                <input
+                  type="number"
+                  value={studioFormData.totalSeats}
                   onChange={(e) =>
                     setStudioFormData({
                       ...studioFormData,
-                      status: e.target.value,
+                      totalSeats: e.target.value,
+                    })
+                  }
+                  min="1"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: "#1f2937",
+                    color: "white",
+                    border: "1px solid #374151",
+                    outline: "none",
+                    marginBottom: "15px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <label>Status Ketersediaan</label>
+                <select
+                  value={studioFormData.isActive ? "true" : "false"}
+                  onChange={(e) =>
+                    setStudioFormData({
+                      ...studioFormData,
+                      isActive: e.target.value === "true",
                     })
                   }
                   required
@@ -613,8 +786,8 @@ export default function AdminStudioPage() {
                     marginBottom: "30px",
                   }}
                 >
-                  <option value="Tersedia">Tersedia</option>
-                  <option value="Tidak Tersedia">Tidak Tersedia</option>
+                  <option value="true">Tersedia</option>
+                  <option value="false">Tidak Tersedia</option>
                 </select>
                 <div className="form-actions">
                   <button
@@ -626,6 +799,128 @@ export default function AdminStudioPage() {
                   </button>
                   <button type="submit" className="btn-save">
                     Simpan Studio
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL EDIT STUDIO */}
+        {showEditStudioModal && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#0b0f19",
+                padding: "30px",
+                borderRadius: "12px",
+                width: "100%",
+                maxWidth: "500px",
+                border: "1px solid #1f2937",
+              }}
+            >
+              <h2 style={{ marginTop: 0, marginBottom: "20px" }}>
+                Edit Studio
+              </h2>
+              <form onSubmit={handleEditStudioSubmit} className="admin-form">
+                <label>Nama Studio</label>
+                <input
+                  type="text"
+                  value={editingStudio.name}
+                  onChange={(e) =>
+                    setEditingStudio({
+                      ...editingStudio,
+                      name: e.target.value,
+                    })
+                  }
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: "#1f2937",
+                    color: "white",
+                    border: "1px solid #374151",
+                    outline: "none",
+                    marginBottom: "15px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <label>Total Kursi</label>
+                <input
+                  type="number"
+                  value={editingStudio.totalSeats}
+                  onChange={(e) =>
+                    setEditingStudio({
+                      ...editingStudio,
+                      totalSeats: e.target.value,
+                    })
+                  }
+                  min="1"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: "#1f2937",
+                    color: "white",
+                    border: "1px solid #374151",
+                    outline: "none",
+                    marginBottom: "15px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <label>Status Ketersediaan</label>
+                <select
+                  value={editingStudio.isActive ? "true" : "false"}
+                  onChange={(e) =>
+                    setEditingStudio({
+                      ...editingStudio,
+                      isActive: e.target.value === "true",
+                    })
+                  }
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: "#1f2937",
+                    color: "white",
+                    border: "1px solid #374151",
+                    outline: "none",
+                    marginBottom: "30px",
+                  }}
+                >
+                  <option value="true">Tersedia</option>
+                  <option value="false">Tidak Tersedia</option>
+                </select>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowEditStudioModal(false)}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-save"
+                    style={{ backgroundColor: "#38bdf8", color: "#0b0f19" }}
+                  >
+                    Update Studio
                   </button>
                 </div>
               </form>
@@ -719,7 +1014,7 @@ export default function AdminStudioPage() {
                     -- Pilih Studio --
                   </option>
                   {studios
-                    .filter((s) => s.status === "Tersedia")
+                    .filter((s) => s.isActive)
                     .map((studio) => (
                       <option key={studio.id} value={studio.id}>
                         {studio.name}
@@ -734,7 +1029,7 @@ export default function AdminStudioPage() {
                   onChange={(e) =>
                     setScheduleFormData({
                       ...scheduleFormData,
-                      price: (e.target.value),
+                      price: e.target.value,
                     })
                   }
                   min="0"
@@ -780,7 +1075,6 @@ export default function AdminStudioPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label>Jam Tayang</label>
-                    {/* Input jam dikasih format step="1" (bila butuh detik), jika tidak default HH:MM cukup */}
                     <input
                       type="time"
                       value={scheduleFormData.showTime}
@@ -906,12 +1200,11 @@ export default function AdminStudioPage() {
                       key={studio.id}
                       value={studio.id}
                       disabled={
-                        studio.status !== "Tersedia" &&
+                        !studio.isActive &&
                         studio.id !== Number(editingSchedule.studioId)
                       }
                     >
-                      {studio.name}{" "}
-                      {studio.status !== "Tersedia" ? "(Nonaktif)" : ""}
+                      {studio.name} {!studio.isActive ? "(Nonaktif)" : ""}
                     </option>
                   ))}
                 </select>
@@ -923,7 +1216,7 @@ export default function AdminStudioPage() {
                   onChange={(e) =>
                     setEditingSchedule({
                       ...editingSchedule,
-                      price: (e.target.value),
+                      price: e.target.value,
                     })
                   }
                   min="0"
