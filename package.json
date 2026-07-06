@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "drizzle-kit": "^0.31.10",
+    "studio": "^0.13.5"
+  }
+}

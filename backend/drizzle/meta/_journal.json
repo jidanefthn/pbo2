@@ -8,6 +8,13 @@
       "when": 1778238850713,
       "tag": "0000_quiet_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783331622317,
+      "tag": "0001_daffy_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }
