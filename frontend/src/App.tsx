@@ -9,6 +9,7 @@ import EditMoviePage from './pages/EditMoviePage';
 import AddMoviePage from './pages/AddMoviePage';
 import AllMoviesPage from './pages/AllMoviePage';
 import AdminStudioPage from './pages/AdminStudioPage';
+import BookingPage from './pages/BookingPage';
 export default function App() {
   return (
     <BrowserRouter>
@@ -21,6 +22,7 @@ export default function App() {
         {/* Rute Film & Dashboard Admin */}
         <Route path="/movie/:id" element={<MovieDetailPage />} /> 
         <Route path="/admin/movies" element={<AdminMoviePage />} />
+        <Route path="/booking" element={<BookingPage />} /> {/* <-- tambah ini */}
         <Route path="/admin/edit-movie/:id" element={<EditMoviePage />} />
         <Route path="/admin/add-movie" element={<AddMoviePage />} />
         <Route path="/all-movies" element={<AllMoviesPage />} />
