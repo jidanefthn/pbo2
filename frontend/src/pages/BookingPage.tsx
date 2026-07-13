@@ -306,7 +306,7 @@ export default function BookingPage() {
               }}
             >
               <img
-                src={"/qris.jpeg"}
+                src={"/qris1.jpg"}
                 alt="QR Payment"
                 style={{ width: "310px", height: "310px" }}
               />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, LayoutGrid, Plus, Trash2, Edit2, Loader2, BarChart3 } from 'lucide-react';
+import { Film, LayoutGrid, Plus, Trash2, Edit2, Loader2, BarChart3, LogOut } from 'lucide-react';
 import logoImage from '../assets/logo.png'; 
 
 export default function AdminMoviePage() {
@@ -74,6 +74,9 @@ export default function AdminMoviePage() {
           </button>
            <button onClick={() => navigate('/admin/report')}>
             <BarChart3 size={20} /> Laporan Penjualan
+          </button>
+           <button onClick={() => navigate('/login')}>
+            <LogOut size={20} /> Logout
           </button>
         </nav>
       </aside>

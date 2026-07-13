@@ -13,6 +13,7 @@ const router = Router();
 // Rute untuk user biasa
 router.post("/", authenticate, createBooking);
 router.get("/history", authenticate, getBookingHistory);
+router.get("/all", authenticate, getAllBookings);
 
 // 🌟 2. INI RUTE YANG HILANG: Rute untuk laporan admin (global)
 router.get("/all", authenticate, getAllBookings);

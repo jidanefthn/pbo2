@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, Film, LayoutGrid, DollarSign, Ticket, Loader2 } from "lucide-react";
+import { BarChart3, Film, LayoutGrid, DollarSign, Ticket, Loader2, LogOutIcon } from "lucide-react";
 import logoImage from "../assets/logo.png"; // Pastikan path logo benar
 
 export default function SalesReportPage() {
@@ -105,6 +105,9 @@ export default function SalesReportPage() {
           </button>
           <button className="active" onClick={() => navigate("/admin/report")} style={{ background: "none", border: "none", color: "#82ebd5", display: "flex", alignItems: "center", gap: "10px", padding: "12px", fontWeight: "bold", width: "100%", textAlign: "left", borderLeft: "4px solid #82ebd5" }}>
             <BarChart3 size={20} /> Laporan Penjualan
+          </button>
+          <button onClick={() => navigate('/login')}>
+            <LogOutIcon size={20} /> Logout
           </button>
         </nav>
       </aside>
